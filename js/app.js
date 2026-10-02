@@ -72,6 +72,45 @@
   });
   var TOTAL = seq;
 
+  /* ---------- Imágenes incluidas en el repositorio (carpeta img/) ---------- */
+  /* js/imagenes.js lo genera tools/descargar_imagenes.py */
+  var IMG = window.IMAGENES || {};
+  var broken = {};
+  var KEY_RULES = [
+    [/^Frontal$/, "frontal"], [/^Parietal$/, "parietal"], [/^Temporal$/, "temporal"],
+    [/^Occipital$/, "occipital"], [/^Esfenoides$/, "esfenoides"], [/^Etmoides$/, "etmoides"],
+    [/^Maxilar$/, "maxilar"], [/^Cigom/, "cigomatico"], [/^Nasal$/, "nasal"],
+    [/^Lagrimal$/, "lagrimal"], [/^Palatino$/, "palatino"], [/^Cornete/, "cornete"],
+    [/^V[oó]mer$/, "vomer"], [/^Mand[ií]bula$/, "mandibula"], [/^Martillo$/, "martillo"],
+    [/^Yunque$/, "yunque"], [/^Estribo$/, "estribo"], [/^Hioides$/, "hioides"],
+    [/^C1 /, "atlas"], [/^C2 /, "axis"], [/^C\d$/, "cervicales"], [/^D\d+$/, "dorsales"],
+    [/^L\d$/, "lumbares"], [/^Sacro$/, "sacro"], [/^C[oó]ccix$/, "coccix"],
+    [/^Estern[oó]n$/, "esternon"], [/^Costilla /, "costilla"],
+    [/^Clav[ií]cula$/, "clavicula"], [/^Esc[aá]pula/, "escapula"], [/^H[uú]mero$/, "humero"],
+    [/^Radio$/, "radio"], [/^C[uú]bito$/, "cubito"],
+    [/^Escafoides del pie$/, "navicular"], [/^Escafoides$/, "escafoides"],
+    [/^Semilunar$/, "semilunar"], [/^Piramidal$/, "piramidal"], [/^Pisiforme$/, "pisiforme"],
+    [/^Trapecio$/, "trapecio"], [/^Trapezoide$/, "trapezoide"], [/^Hueso grande$/, "grande"],
+    [/^Ganchoso$/, "ganchoso"], [/^Metacarpiano/, "metacarpianos"], [/^Falange/, "falanges"],
+    [/^Coxal$/, "coxal"], [/^F[eé]mur$/, "femur"], [/^R[oó]tula$/, "rotula"],
+    [/^Tibia$/, "tibia"], [/^Peron[eé]$/, "peroneo"], [/^Astr[aá]galo$/, "astragalo"],
+    [/^Calc[aá]neo$/, "calcaneo"], [/^Cuboides$/, "cuboides"],
+    [/^Cuneiforme medial$/, "cuneiforme_medial"], [/^Cuneiforme intermedio$/, "cuneiforme_intermedio"],
+    [/^Cuneiforme lateral$/, "cuneiforme_lateral"], [/^Metatarsiano/, "metatarsianos"]
+  ];
+  function keyFor(name) {
+    var n = name.replace(/\s*\((der|izq)\.\)\s*$/, "");
+    for (var i = 0; i < KEY_RULES.length; i++) {
+      if (KEY_RULES[i][0].test(n)) return KEY_RULES[i][1];
+    }
+    return null;
+  }
+  function defaultFor(id) {
+    var k = keyFor(BONES[id].name);
+    return (k && IMG[k] && !broken[k]) ? { key: k, src: "img/" + IMG[k].file } : null;
+  }
+  function hasImg(id) { return !!(images[id] || defaultFor(id)); }
+
   /* ---------- Estado ---------- */
   var checked = {};         // id -> true
   var images = {};          // id -> dataURL
@@ -122,11 +161,14 @@
 
   function phHTML(id) {
     var name = BONES[id].name;
-    if (images[id]) {
-      return '<img src="' + images[id] + '" alt="Imagen de ' + name + '" data-act="view">' +
+    var mine = images[id];
+    var def = mine ? null : defaultFor(id);
+    var src = mine || (def && def.src);
+    if (src) {
+      return '<img src="' + src + '" alt="Imagen de ' + name + '"' + (def ? ' data-key="' + def.key + '"' : '') + ' data-act="view" loading="lazy">' +
              '<span class="ph-tools">' +
-             '<button type="button" data-act="replace" aria-label="Cambiar imagen">↻</button>' +
-             '<button type="button" data-act="remove" aria-label="Quitar imagen">✕</button>' +
+             '<button type="button" data-act="replace" aria-label="Subir mi propia imagen" title="Subir mi propia imagen">↻</button>' +
+             (mine ? '<button type="button" data-act="remove" aria-label="Quitar mi imagen" title="Quitar mi imagen">✕</button>' : '') +
              '</span>';
     }
     return '<span class="plus" aria-hidden="true">+</span><span>Subir imagen</span>';
@@ -134,7 +176,7 @@
   function boneHTML(id) {
     var name = BONES[id].name;
     return '<article class="bone' + (checked[id] ? " on" : "") + '" data-id="' + id + '">' +
-      '<div class="ph" data-act="' + (images[id] ? "none" : "upload") + '" role="' + (images[id] ? "group" : "button") + '" tabindex="' + (images[id] ? "-1" : "0") + '" aria-label="' + (images[id] ? "Imagen de " : "Subir imagen de ") + name + '">' + phHTML(id) + '</div>' +
+      '<div class="ph" data-act="' + (hasImg(id) ? "none" : "upload") + '" role="' + (hasImg(id) ? "group" : "button") + '" tabindex="' + (hasImg(id) ? "-1" : "0") + '" aria-label="' + (hasImg(id) ? "Imagen de " : "Subir imagen de ") + name + '">' + phHTML(id) + '</div>' +
       '<button type="button" class="name" data-act="toggle" aria-pressed="' + (checked[id] ? "true" : "false") + '">' + name + '</button>' +
       '</article>';
   }
@@ -218,12 +260,26 @@
     } else if (act === "remove") {
       delete images[id]; dbDel(id); updateCard(id);
     } else if (act === "view") {
-      document.getElementById("lb-img").src = images[id];
+      document.getElementById("lb-img").src = t.getAttribute("src");
       document.getElementById("lb-img").alt = "Imagen de " + BONES[id].name;
       document.getElementById("lb-name").textContent = BONES[id].name;
+      var info = IMG[t.getAttribute("data-key")];
+      document.getElementById("lb-credit").textContent = info
+        ? "Imagen: " + (info.autor || "Wikimedia Commons") + (info.licencia ? ", " + info.licencia : "")
+        : "";
       lb.hidden = false;
     }
   });
+
+  app.addEventListener("error", function (e) {
+    var t = e.target;
+    var k = t && t.tagName === "IMG" ? t.getAttribute("data-key") : null;
+    if (!k || broken[k]) return;
+    broken[k] = true;
+    Object.keys(BONES).forEach(function (id) {
+      if (keyFor(BONES[id].name) === k) updateCard(id);
+    });
+  }, true);
 
   app.addEventListener("keydown", function (e) {
     if ((e.key === "Enter" || e.key === " ") && e.target.matches('.ph[data-act="upload"]')) {
