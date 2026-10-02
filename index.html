@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sistema óseo: módulos de estudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="counter"><b id="count">0</b><span>/ <span id="total">0</span></span></div>
+    <button class="reset" id="reset" type="button">Reiniciar contador</button>
+    <p class="counter-label">huesos estudiados</p>
+    <div class="bar" role="progressbar" aria-label="Progreso" aria-valuemin="0" aria-valuenow="0"><i id="fill"></i></div>
+  </div>
+</header>
+
+<main>
+  <p class="intro">Toca el nombre de un hueso para marcarlo como estudiado. Si lo tocas otra vez, se desmarca. Toca el recuadro de arriba para subir tu propia imagen de ese hueso.</p>
+  <div id="done" class="done" hidden>Completaste todos los huesos.</div>
+  <div id="app"></div>
+</main>
+
+<div class="lb" id="lb" hidden>
+  <img id="lb-img" alt="">
+  <p id="lb-name"></p>
+  <button type="button" id="lb-close">Cerrar</button>
+</div>
+
+<input type="file" id="file" accept="image/*" hidden>
+
+<script src="js/app.js"></script>
+</body>
+</html>
